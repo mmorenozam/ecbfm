@@ -117,10 +117,18 @@ sfunc <- function(lnames,patk,vdc){
     }
     
     df <- prd
-    
-    df <- df %>% 
+    set.seed(100785)
+    df <- df %>%
+      gather(par,value,-data,-chain)%>%
+      group_by(par,data,chain)%>%
+      mutate(ql=quantile(value,0.025,na.rm=T),qu=quantile(value,0.975,na.rm=T),row=row_number()) %>%
+      dplyr::filter(value <= qu & value >=ql )%>%
+      dplyr::select(-qu,-ql)%>%
+      sample_n(1900) %>%
+      mutate(row=seq(1,1900,1)) %>%
+      spread(par,value) %>%
+      dplyr::select(-row)%>% 
       group_by(data,chain) %>% 
-      summarise_all(list(median))%>%
       separate(data,into=c('aut','ident','country','cult','meth','start','turn','temp','simul'),sep='_')
     
     dli[[i]] <- df
@@ -398,7 +406,7 @@ save_plot(paste0(outpth,'figS27.pdf'),p1,base_height = 20.5,base_width =10.2)
 
 plt_func <- function(df,feat,lab,lab2,mdl){
   df <- do.call('rbind',df)
-  fl <- names(which(table(df[,feat])==4))
+  fl <- names(which(table(df[,feat])==7600))
   if (length(fl)!=0){
     for (j in 1:length(fl)){
       df <- subset(df,get(feat)!=fl[j])
@@ -423,17 +431,16 @@ plt_func <- function(df,feat,lab,lab2,mdl){
   if (feat=='meth'){
     df <- subset(df,meth!='NA')
     cols <- c("hp"="#D43F3AFF",
-              "wb"="#EEA236FF",
-              "pt"="#5CB85CFF",
-              "st"="#357EBDFF")
+              "pt"="#EEA236FF",
+              "st"="#5CB85CFF",
+              "wb"="#357EBDFF")
   }
   
   if (feat=='country'){
     df <- subset(df,country!='NA')
-    cols <- c("GH"="#D43F3AFF",
-              "BR"="#EEA236FF",
-              "EC"="#5CB85CFF",
-              "NI"="#357EBDFF")
+    cols <- c("BR"="#D43F3AFF",
+              "EC"="#EEA236FF",
+              "GH"="#5CB85CFF")
   }
   
   if (feat=='temp'){
@@ -456,6 +463,10 @@ plt_func <- function(df,feat,lab,lab2,mdl){
   
   dfp <- data.frame(PC1.ind,PC2.ind,df[,feat])
   colnames(dfp)[3] <- 'feat'
+  
+  set.seed(100785)
+  dfp_sub <- dfp %>%
+    sample_n(760)
   
   dfl <- data.frame(PC1.var,PC2.var,labs.var)
   
@@ -503,7 +514,7 @@ plt_func <- function(df,feat,lab,lab2,mdl){
   dfl <- left_join(dfl,lbs_df,by=c('labs.var'='X1'))
   
   plp1 <- ggplot(data=dfp,aes(x=PC1.ind,PC2.ind,colour=feat))+
-    geom_point(aes(shape=feat))+
+    geom_point(data=dfp_sub,aes(shape=feat))+
     theme_bw() +
     theme(strip.text.x = element_text(hjust = -0.01),
           panel.grid.major = element_line(colour = "grey90",linetype='dashed'),
@@ -513,7 +524,7 @@ plt_func <- function(df,feat,lab,lab2,mdl){
           strip.text = element_text(size=16),
           axis.text=element_text(size=14),
           axis.title=element_text(size=14),
-          legend.position = 'bottom'
+          legend.position = "bottom"
     )+
     ggtitle(lab)+
     scale_colour_manual(values=cols)+
@@ -521,7 +532,7 @@ plt_func <- function(df,feat,lab,lab2,mdl){
     xlab(paste('Scores PC1 (',PC1.expl,'%',')', sep ='')) +
     ylab(paste('Scores PC2 (',PC2.expl,'%',')', sep ='')) +
     labs(fill='Groups',colour='Groups',shape='Groups')+
-    stat_ellipse(aes(fill=feat),type='norm',level=0.95,geom='polygon',alpha=0.2,linetype='blank')
+    stat_ellipse(aes(fill=feat),type='norm',level=0.90,geom='polygon',alpha=0.2,linetype='blank')
   
   plp2 <- ggplot(data=dfl,aes(x=PC1.var,y=PC2.var,label=TeX(X2,output='character')))+
     geom_point(size=2,colour="#D43F3AFF")+
@@ -534,11 +545,11 @@ plt_func <- function(df,feat,lab,lab2,mdl){
           strip.background = element_blank(),
           strip.text = element_text(size=16),
           axis.text=element_text(size=14),
-          axis.title=element_text(size=14),
+          axis.title=element_text(size=14)
     )+
     ggtitle(lab2)+
     xlab(paste('Loadings PC1 (',PC1.expl,'%',')', sep ='')) +
-    ylab(paste('Loadings PC2 (',PC2.expl,'%',')', sep =''))
+    ylab(paste('Loadings PC2 (',PC2.expl,'%',')', sep ='')) 
   
   plt <- list(plp1,plp2)
   return(plt)
