@@ -769,8 +769,8 @@ cplt2 <- function(idf,lbl,bh,bw,lp){
 #Figure S24 plotting: This figure is composed by three subplots as follows
 cplt1(rbind(swf3(1,'ecwb1_mm0.Rsave','0',1),
             swf3(1,'ecwb1_mm1.Rsave','1',1),
-            swf3(1,'ecwb1_mm3.Rsave','2',1),
-            swf3(1,'ecwb1_mm4.Rsave','3',1),
+            swf3(1,'ecwb1_mm3.Rsave','3',1),
+            swf3(1,'ecwb1_mm4.Rsave','4',1),
             swf3(1,'ecwb1_mm12.Rsave','1,2',1)),'figS24a',17.5,5*3,1)
 
 cplt1(rbind(swf3(1,'ecwb1_mm13.Rsave','1,3',1),
